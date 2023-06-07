@@ -34,20 +34,31 @@ router.post('/rooms',async (req,res) => {
     }
 })
 // add rooms 
-router.post('/rooms/add', (req,res) => {
+router.post('/rooms/add', async  (req,res) => {
 
     try{
-        const body = req.body
+        const body = req.body;
+        const contact = await pool.query(`SELECT id FROM users WHERE email='${body.to}'`)
+        if(await pool.query(`SELECT id FROM room WHERE "from" ='${body.from}' AND "to" = '${contact.rows[0].id}'`) || await pool.query(`SELECT id FROM room WHERE from ='${contact.rows[0].id}' AND to = '${body.from}'`)){
+            res.status(400).send({"msg":"Duplicate."});
+        }
 
-        pool.query(`INSERT INTO rooms (from, to) VALUES ($1,$2)`,[body.from, body.to], (err,result) => {
+        console.log( [body.from, contact.rows[0].id, generateRoom()])
+        pool.query(`INSERT INTO room ("from", "to", "room_id") VALUES ($1,$2,$3)`,[body.from, contact.rows[0].id, generateRoom()], (err,result) => {
             if(err){
-                res.status(403).send({"msg":"Account not found."});
+                console.log(err)
+                res.status(400).send({"msg":"Operation Failed."});
             }
             if(result){
+                console.log(result)
                 res.status(200).send({msg:"ok",rooms:result.rows});
             }
         })
+
+
     } catch(e){
+        await pool.query('ROLLBACK');
+        console.log(e)
         res.status(500).send({"msg":"Server error.",err:e});
     }
 })
@@ -71,5 +82,11 @@ router.post('/rooms/get', (req,res) => {
     }
 })
 
+function generateRoom() {
+    const timestamp = Date.now().toString(36); 
+    const randomString = Math.random().toString(36).substr(2, 5); 
+  
+    return `room_${timestamp}${randomString}`;
+}
 
 module.exports = router;

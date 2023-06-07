@@ -14,7 +14,7 @@ router.use(bodyParser.json())
 router.post('/auth', (req,res) => {
     const credentials = req.body;
     try{
-        pool.query(`SELECT * FROM users WHERE email = '${credentials.email}'`, (err,result) => {
+        pool.query(`SELECT * FROM users WHERE email = '${credentials.email}';`, (err,result) => {
             if(err){
                 res.status(403).send({"msg":"Account not found."}) 
             }
