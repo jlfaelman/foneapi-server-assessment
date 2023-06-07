@@ -39,11 +39,6 @@ router.post('/rooms/add', async  (req,res) => {
     try{
         const body = req.body;
         const contact = await pool.query(`SELECT id FROM users WHERE email='${body.to}'`)
-        if(await pool.query(`SELECT id FROM room WHERE "from" ='${body.from}' AND "to" = '${contact.rows[0].id}'`) || await pool.query(`SELECT id FROM room WHERE from ='${contact.rows[0].id}' AND to = '${body.from}'`)){
-            res.status(400).send({"msg":"Duplicate."});
-        }
-
-        console.log( [body.from, contact.rows[0].id, generateRoom()])
         pool.query(`INSERT INTO room ("from", "to", "room_id") VALUES ($1,$2,$3)`,[body.from, contact.rows[0].id, generateRoom()], (err,result) => {
             if(err){
                 console.log(err)
